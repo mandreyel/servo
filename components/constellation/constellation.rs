@@ -91,7 +91,7 @@
 
 use backtrace::Backtrace;
 use bluetooth_traits::BluetoothRequest;
-use browsingcontext::{AllBrowsingContextsIterator, BrowsingContext, FullyActiveBrowsingContextsIterator};
+use browsingcontext::{AllBrowsingContextsIterator, BrowsingContext, FullyActiveBrowsingContextsIterator, NewBrowsingContextInfo};
 use canvas::canvas_paint_thread::CanvasPaintThread;
 use canvas::webgl_thread::WebGLThreads;
 use canvas_traits::canvas::CanvasId;
@@ -1595,8 +1595,8 @@ where
             top_level_browsing_context_id: top_level_browsing_context_id,
             browsing_context_id: browsing_context_id,
             new_pipeline_id: new_pipeline_id,
-            parent_pipeline_id: None,
             replace: None,
+            new_browsing_context_info: None,
         });
     }
 
@@ -1686,8 +1686,10 @@ where
             top_level_browsing_context_id: top_level_browsing_context_id,
             browsing_context_id: browsing_context_id,
             new_pipeline_id: pipeline_id,
-            parent_pipeline_id: None,
             replace: None,
+            new_browsing_context_info: Some(NewBrowsingContextInfo {
+                parent_pipeline_id: None,
+            }),
         });
     }
 
@@ -1830,8 +1832,8 @@ where
             top_level_browsing_context_id: load_info.info.top_level_browsing_context_id,
             browsing_context_id: load_info.info.browsing_context_id,
             new_pipeline_id: load_info.info.new_pipeline_id,
-            parent_pipeline_id: None,
             replace,
+            new_browsing_context_info: None,
         });
     }
 
@@ -1884,8 +1886,10 @@ where
             top_level_browsing_context_id: top_level_browsing_context_id,
             browsing_context_id: browsing_context_id,
             new_pipeline_id: new_pipeline_id,
-            parent_pipeline_id: Some(parent_pipeline_id),
             replace: None,
+            new_browsing_context_info: Some(NewBrowsingContextInfo {
+                parent_pipeline_id: Some(parent_pipeline_id),
+            }),
         });
     }
 
@@ -1930,9 +1934,11 @@ where
             top_level_browsing_context_id: new_top_level_browsing_context_id,
             browsing_context_id: new_browsing_context_id,
             new_pipeline_id: new_pipeline_id,
-            // Auxiliary browsing contexts are always top level.
-            parent_pipeline_id: None,
             replace: None,
+            new_browsing_context_info: Some(NewBrowsingContextInfo {
+                // Auxiliary browsing contexts are always top level.
+                parent_pipeline_id: None,
+            }),
         });
     }
 
@@ -2115,8 +2121,8 @@ where
                     top_level_browsing_context_id: top_level_id,
                     browsing_context_id: browsing_context_id,
                     new_pipeline_id: new_pipeline_id,
-                    parent_pipeline_id: None,
                     replace,
+                    new_browsing_context_info: None,
                 });
                 Some(new_pipeline_id)
             },
@@ -2415,8 +2421,8 @@ where
                     top_level_browsing_context_id: top_level_id,
                     browsing_context_id: browsing_context_id,
                     new_pipeline_id: new_pipeline_id,
-                    parent_pipeline_id: None,
                     replace: Some(NeedsToReload::Yes(pipeline_id, load_data.clone())),
+                    new_browsing_context_info: None,
                 });
                 return;
             },
@@ -3061,11 +3067,15 @@ where
 
         match old_pipeline_id {
             None => {
+                let new_context_info = match change.new_browsing_context_info {
+                    Some(info) => info,
+                    None => return warn!("No info for new browsing context {}.", change.browsing_context_id)
+                };
                 self.new_browsing_context(
                     change.browsing_context_id,
                     change.top_level_browsing_context_id,
                     change.new_pipeline_id,
-                    change.parent_pipeline_id,
+                    new_context_info.parent_pipeline_id,
                 );
                 self.update_activity(change.new_pipeline_id);
                 self.notify_history_changed(change.top_level_browsing_context_id);
@@ -3250,9 +3260,9 @@ where
         if let Some(pending_index) = pending_index {
             let change = self.pending_changes.swap_remove(pending_index);
             // Notify the parent (if there is one).
-            let parent_pipeline_id = match change.parent_pipeline_id {
+            let parent_pipeline_id = match change.new_browsing_context_info {
                 // This will be a new browsing context.
-                Some(parent_pipeline_id) => parent_pipeline_id,
+                Some(ref info) => info.parent_pipeline_id,
                 // This is an existing browsing context. TODO this is an unfortunate effect of
                 // introducing `Option<NewBrowsingContextInfo>` to `SessionHistoryChange`. Can we
                 // avoid this browsing context lookup for existing browsing contexts (which is

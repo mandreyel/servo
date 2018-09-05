@@ -36,6 +36,10 @@ pub struct BrowsingContext {
     pub pipelines: HashSet<PipelineId>,
 }
 
+pub struct NewBrowsingContextInfo {
+    pub parent_pipeline_id: Option<PipelineId>,
+}
+
 impl BrowsingContext {
     /// Create a new browsing context.
     /// Note this just creates the browsing context, it doesn't add it to the constellation's set of browsing contexts.

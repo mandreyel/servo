@@ -2,6 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+use browsingcontext::NewBrowsingContextInfo;
 use msg::constellation_msg::{BrowsingContextId, HistoryStateId, PipelineId, TopLevelBrowsingContextId};
 use script_traits::LoadData;
 use servo_url::ServoUrl;
@@ -111,12 +112,10 @@ pub struct SessionHistoryChange {
     /// The pipeline for the document being loaded.
     pub new_pipeline_id: PipelineId,
 
-    /// The parent pipeline of the pipeline for the document being loaded, if
-    /// this is not the pipeline in a top level browsing context.
-    pub parent_pipeline_id: Option<PipelineId>,
-
     /// The old pipeline that the new pipeline should replace.
     pub replace: Option<NeedsToReload>,
+
+    pub new_browsing_context_info: Option<NewBrowsingContextInfo>,
 }
 
 /// Represents a pipeline or discarded pipeline in a history entry.
