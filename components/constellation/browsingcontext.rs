@@ -17,6 +17,7 @@ use style_traits::CSSPixel;
 pub struct NewBrowsingContextInfo {
     pub parent_pipeline_id: Option<PipelineId>,
     pub is_private: bool,
+    pub is_visible: bool,
 }
 
 /// The constellation's view of a browsing context.
@@ -39,6 +40,10 @@ pub struct BrowsingContext {
     /// Whether this browsing context is in private browsing mode.
     pub is_private: bool,
 
+    /// Whether this browsing context should be treated as visible for the
+    /// purposes of scheduling and resource management.
+    pub is_visible: bool,
+
     /// The pipeline for the current session history entry.
     pub pipeline_id: PipelineId,
 
@@ -58,6 +63,7 @@ impl BrowsingContext {
         pipeline_id: PipelineId,
         parent_pipeline_id: Option<PipelineId>,
         is_private: bool,
+        is_visible: bool,
     ) -> BrowsingContext {
         let mut pipelines = HashSet::new();
         pipelines.insert(pipeline_id);
@@ -66,6 +72,7 @@ impl BrowsingContext {
             top_level_id: top_level_id,
             size: None,
             is_private: is_private,
+            is_visible: is_visible,
             pipeline_id: pipeline_id,
             parent_pipeline_id: parent_pipeline_id,
             pipelines,
