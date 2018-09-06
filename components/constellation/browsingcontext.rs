@@ -15,9 +15,8 @@ use style_traits::CSSPixel;
 /// context which doesn't exist yet, these values needed for the new browsing
 /// context are stored here so that they may be available later.
 pub struct NewBrowsingContextInfo {
-    /// The parent pipeline of the browsing context, if this is not the top
-    /// level browsing context.
     pub parent_pipeline_id: Option<PipelineId>,
+    pub is_private: bool,
 }
 
 /// The constellation's view of a browsing context.
@@ -37,6 +36,9 @@ pub struct BrowsingContext {
     /// The size of the frame.
     pub size: Option<TypedSize2D<f32, CSSPixel>>,
 
+    /// Whether this browsing context is in private browsing mode.
+    pub is_private: bool,
+
     /// The pipeline for the current session history entry.
     pub pipeline_id: PipelineId,
 
@@ -55,6 +57,7 @@ impl BrowsingContext {
         top_level_id: TopLevelBrowsingContextId,
         pipeline_id: PipelineId,
         parent_pipeline_id: Option<PipelineId>,
+        is_private: bool,
     ) -> BrowsingContext {
         let mut pipelines = HashSet::new();
         pipelines.insert(pipeline_id);
@@ -62,6 +65,7 @@ impl BrowsingContext {
             id: id,
             top_level_id: top_level_id,
             size: None,
+            is_private: is_private,
             pipeline_id: pipeline_id,
             parent_pipeline_id: parent_pipeline_id,
             pipelines,
